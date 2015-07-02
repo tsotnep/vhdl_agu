@@ -188,6 +188,7 @@ begin
 	Chip_Enable_out  <= '0' when (delaydecoder = ADDRESS_CALCULATION) else '1';
 	Write_Enable_out <= ReadORWrite_in when (delaydecoder = ADDRESS_CALCULATION) else '1';
 
+
 	D_debugging : process(rst, clk)
 	begin
 		if rst = '1' then
@@ -205,6 +206,165 @@ begin
 			AGUst <= AGUnst;            --main/top FSMs state transition
 		end if;
 	end process p_state_reg;
+
+	p_instr_reg : process(rst, clk)
+	begin
+		if rst = '1' then
+			instr <= (others => '0');
+		elsif rising_edge(clk) then
+			if I_en_in = '1' then
+				instr <= instr_in;
+			end if;
+		end if;
+	end process;
+
+	-- address generation is valid when: 
+	-- delaydecoder is in ADDRESS_CALCULATION 
+
+	p_agu_fsm : process (AGUst, F_addrs_range_Lin_IsOne_wire, F_addrs_range_Lin_IsZero_Reg1, F_addrs_range_Lin_IsZero_wire, F_block_write_IsZero, F_i_block_write_IsZero, F_i_initial_delay_IsOne, F_initial_delay_IsZero, F_middle_delay_IsZero, F_no_of_repetitions_IsZero, F_repetition_delay_IsZero, instr_in)  
+	begin
+		ADD5_select        <= bypass_input; --default state
+		ADD4_select        <= bypass_input; --default state
+		ADD3_select        <= bypass_input; --default state
+		ADD2_select        <= bypass_input; --default state
+		ADD1_select        <= bypass_input; --default state
+		DELAYdecoder       <= NO_ACTION;
+		instr_complete_out <= '0';
+		D_which_condition <= 30;
+		case AGUst is
+			when IDLEst =>
+				instr_complete_out <= '1';
+				if I_en_in = '1' then
+					D_which_condition <= 31;
+					--Reseting DataPath - ADD1 and ADDv
+					ADD1_select       <= reset1_delays_and_block_write;
+					ADD2_select       <= reset2_no_of_reps_and_stage_count;
+					ADD3_select       <= reset3_Current_Addrs_and_Addrs_Range_BitRev_initial;
+					ADD4_select       <= reset4_start_addrs;
+					ADD5_select       <= reset5_Addrs_Range_Lin;
+					DELAYdecoder      <= NO_ACTION;
+					
+					if F_i_initial_delay_IsOne = '1' then
+						AGUnst            <= CALCULATIONst;
+					else
+						AGUnst            <= INITIAL_DELAY_st;
+					end if;
+				end if;
+			when CALCULATIONst =>
+				DELAYdecoder <= ADDRESS_CALCULATION;
+				if F_no_of_repetitions_IsZero = '1' then
+					D_which_condition <= 1;
+					AGUnst            <= IDLEst;
+					delaydecoder      <= NO_ACTION;
+				else
+					if F_addrs_range_Lin_IsZero_wire = '1' then
+						D_which_condition <= 2;
+						-------------------------------------------------- last clock cycle
+						--decr start address
+						--decr no of repetition
+						ADD4_select       <= decr4_start_addrs;
+						ADD2_select       <= decr2_no_of_repetitions;
+						ADD1_select       <= decr1_block_write;
+						delaydecoder      <= NO_ACTION;
+
+					elsif F_addrs_range_Lin_IsZero_Reg1 = '1' then
+						D_which_condition <= 3;
+						-------------------------------------------- after last clock cycle n 
+						-------------------------------------------- addrs range sets automatically - combinationally
+						-- current address becomes start address
+						-- stage changes for bitreverse
+						-- we go in repetition delay state
+						ADD2_select       <= decr2_stage_count;
+						delaydecoder      <= NO_ACTION;
+						
+--						AGUnst            <= REPETITION_DELAY_st;
+						
+--							ADD3_select       <= decr3_current_addrs;
+--							ADD5_select       <= decr5_addrs_range_Lin;
+						
+
+					else
+						if F_i_block_write_IsZero = '1' then
+							D_which_condition <= 4;
+							--generate address
+							--decr addrs range
+							--go in middle delay
+							ADD3_select       <= decr3_current_addrs;
+							ADD5_select       <= decr5_addrs_range_Lin;
+							AGUnst            <= MIDDLE_DELAY_st;
+							
+						
+						if F_addrs_range_Lin_IsOne_wire = '1' then
+							
+							D_which_condition <= 401;
+							ADD4_select       <= decr4_start_addrs;
+							ADD2_select       <= decr2_no_of_repetitions;
+							ADD1_select       <= decr1_block_write;
+							
+							AGUnst            <= REPETITION_DELAY_st;
+						end if;
+						else
+							if F_block_write_IsZero = '1' then
+								D_which_condition <= 5;
+								--go in middle delay
+								AGUnst            <= MIDDLE_DELAY_st;
+							ADD5_select       <= decr5_addrs_range_Lin;
+						if F_addrs_range_Lin_IsOne_wire = '1' then
+							
+							D_which_condition <= 501;
+							ADD5_select       <= decr5_addrs_range_Lin;
+							ADD4_select       <= decr4_start_addrs;
+							ADD2_select       <= decr2_no_of_repetitions;
+							ADD1_select       <= decr1_block_write;
+							
+							AGUnst            <= REPETITION_DELAY_st;
+						end if;
+						
+							else
+								D_which_condition <= 6;
+								--generate adddress
+								--decr block write
+								--decr addrs range
+								ADD3_select       <= decr3_current_addrs;
+								ADD1_select       <= decr1_block_write;
+								ADD5_select       <= decr5_addrs_range_Lin;
+
+							end if;
+						end if;
+					end if;
+				end if;
+			when REPETITION_DELAY_st =>
+				delaydecoder <= NO_ACTION;
+				ADD1_select  <= decr1_repetition_delay;
+				if F_repetition_delay_IsZero = '1' then
+					D_which_condition <= 25;
+					AGUnst            <= CALCULATIONst;
+				else
+					D_which_condition <= 26;
+					AGUnst            <= REPETITION_DELAY_st;
+				end if;
+			when INITIAL_DELAY_st =>
+				delaydecoder <= NO_ACTION;
+				ADD1_select  <= decr1_initial_delay;
+				if F_initial_delay_IsZero = '1' then
+					D_which_condition <= 21;
+					AGUnst            <= CALCULATIONst;
+				else
+					D_which_condition <= 22;
+					AGUnst            <= INITIAL_DELAY_st;
+				end if;
+			when MIDDLE_DELAY_st =>
+				delaydecoder <= NO_ACTION;
+				ADD1_select  <= decr1_middle_delay;
+				if F_middle_delay_IsZero = '1' then
+					D_which_condition <= 23;
+					AGUnst            <= CALCULATIONst;
+				else
+					D_which_condition <= 24;
+					AGUnst            <= MIDDLE_DELAY_st;
+				end if;
+		end case;
+	end process;
 
 
 	-------------------------------------------------------------------------------------------------------
