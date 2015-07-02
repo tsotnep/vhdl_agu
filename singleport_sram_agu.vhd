@@ -34,6 +34,11 @@ use IEEE.numeric_std.all;
 use WORK.SINGLEPORT_SRAM_AGU_types_n_constants.all;
 use WORK.misc.all;
 
+-- this version is not complite, it works only with delays > 2
+-- date of updaing this comment
+-- Fri 3 Jul 01:44:31 (GEO)
+
+
 entity SINGLEPORT_SRAM_AGU is
 	port(
 		instr_complete_out : out STD_LOGIC;
