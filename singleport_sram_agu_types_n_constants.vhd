@@ -1,11 +1,12 @@
 package SINGLEPORT_SRAM_AGU_types_n_constants is
-	TYPE AGU_SRAM_STATE_TYPE IS (IDLEst, CALCULATIONst, DELAYst); --in old version it was COUNT, RDRW, BITREV, REPEAT);
-	TYPE AGU_SRAM_DELAY_TYPE IS (INITIAL, MIDDLE, REPETITION, NO_DELAY); -- added NODELAY state, maybe we dont need it, idk yet.
+	type AGU_SRAM_STATE_TYPE is (IDLEst, CALCULATIONst, REPETITION_DELAY_st, INITIAL_DELAY_st, MIDDLE_DELAY_st); --in old version it was COUNT, RDRW, BITREV, REPEAT);
+	type AGU_SRAM_DELAY_TYPE is (ADDRESS_CALCULATION, NO_ACTION); -- added NODELAY state, maybe we dont need it, idk yet.
 
-	TYPE AGU_SRAM_ADD1_TYPE IS (decr_initial_delay, decr_middle_delay, decr_repetition_delay, decr_block_write, bypass_input, reset);
-	TYPE AGU_SRAM_ADD2_TYPE IS (decr_no_of_repetitions, decr_stage_count, bypass_input, reset);
-	TYPE AGU_SRAM_ADD3_TYPE IS (decr_current_addrs, decr_point_count, bypass_input, reset);
-	TYPE AGU_SRAM_ADD4_TYPE IS (decr_start_addrs, decr_end_addrs_Lin, decr_end_addrs_BitRev, bypass_input, reset);
+	type AGU_SRAM_ADD1_TYPE is (decr1_middle_delay, decr1_initial_delay, decr1_repetition_delay, decr1_block_write, bypass_input, reset1_delays_and_block_write);
+	type AGU_SRAM_ADD2_TYPE is (decr2_stage_count, decr2_no_of_repetitions, bypass_input, reset2_no_of_reps_and_stage_count);
+	type AGU_SRAM_ADD3_TYPE is (decr3_addrs_range_BitRev, decr3_current_addrs, bypass_input, reset3_Current_Addrs_and_Addrs_Range_BitRev, reset3_Current_Addrs_and_Addrs_Range_BitRev_initial);
+	type AGU_SRAM_ADD4_TYPE is (decr4_start_addrs, bypass_input, reset4_start_addrs);
+	type AGU_SRAM_ADD5_TYPE is (decr5_addrs_range_Lin, bypass_input, reset5_Addrs_Range_Lin);
 
 	-- General
 	CONSTANT INSTR_WIDTH : INTEGER := 68;
