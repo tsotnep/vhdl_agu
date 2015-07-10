@@ -299,31 +299,27 @@ begin
 							AGUnst            <= MIDDLE_DELAY_st;
 							
 						
-						if F_addrs_range_Lin_IsOne_wire = '1' then
-							
-							D_which_condition <= 401;
-							ADD4_select       <= decr4_start_addrs;
-							ADD2_select       <= decr2_no_of_repetitions;
-							ADD1_select       <= decr1_block_write;
-							
-							AGUnst            <= REPETITION_DELAY_st;
-						end if;
+							if F_addrs_range_Lin_IsOne_wire = '1' then							
+								D_which_condition <= 401;
+								ADD4_select       <= decr4_start_addrs;
+								ADD2_select       <= decr2_no_of_repetitions;
+								ADD1_select       <= decr1_block_write;							
+								AGUnst            <= REPETITION_DELAY_st;
+							end if;
 						else
 							if F_block_write_IsZero = '1' then
 								D_which_condition <= 5;
 								--go in middle delay
 								AGUnst            <= MIDDLE_DELAY_st;
-							ADD5_select       <= decr5_addrs_range_Lin;
-						if F_addrs_range_Lin_IsOne_wire = '1' then
-							
-							D_which_condition <= 501;
-							ADD5_select       <= decr5_addrs_range_Lin;
-							ADD4_select       <= decr4_start_addrs;
-							ADD2_select       <= decr2_no_of_repetitions;
-							ADD1_select       <= decr1_block_write;
-							
-							AGUnst            <= REPETITION_DELAY_st;
-						end if;
+								ADD5_select       <= decr5_addrs_range_Lin;
+								if F_addrs_range_Lin_IsOne_wire = '1' then
+									D_which_condition <= 501;
+									ADD5_select       <= decr5_addrs_range_Lin;
+									ADD4_select       <= decr4_start_addrs;
+									ADD2_select       <= decr2_no_of_repetitions;
+									ADD1_select       <= decr1_block_write;
+									AGUnst            <= REPETITION_DELAY_st;
+								end if;
 						
 							else
 								D_which_condition <= 6;
